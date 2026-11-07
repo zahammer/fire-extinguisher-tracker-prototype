@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fire Extinguisher Tracker — Dashboard (Prototype)</title>
+<style>
+  :root{
+    --gold-dark:#a98500; --gold:#ffcd00; --ink:#1f1f1f; --text:#3a3a3a; --muted:#6b6b6b;
+    --line:#e3e3e3; --bg:#f1f1f1; --card:#fff; --chip:#ececec;
+    --ok:#2e7d32; --warn:#b26a00; --bad:#c62828; --info:#1565c0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:"Segoe UI","Open Sans",Roboto,Helvetica,Arial,sans-serif;letter-spacing:.02em}
+  a{color:var(--text)}
+  button{font:inherit;letter-spacing:inherit}
+
+/* Header, MTU Logo */
+  header.top{height:120px;background:linear-gradient(180deg,#8f7300 0%,#c9a200 45%,#f2c500 100%);
+    display:flex;align-items:center;padding:0 64px;gap:28px;color:#111}
+  .icon-btn{background:none;border:0;cursor:pointer;color:#fff;padding:6px;display:grid;place-items:center;border-radius:50%}
+  .icon-btn:hover{background:rgba(255,255,255,.15)}
+  .icon-btn svg{width:28px;height:28px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#111}
+  .brand .logo{display:block;height:60px;width:auto}
+  .brand .mark{width:48px;height:58px;border:3px solid #111;background:#111;display:grid;place-items:center;color:var(--gold)}
+  .brand .mark svg{width:30px;height:34px}
+  .brand .words{line-height:1.02;font-family:Georgia,"Times New Roman",serif}
+  .brand .words b{display:block;font-size:19px}
+  .brand .words span{display:block;font-size:15px;font-weight:600;color:#3a2f00}
+  .brand .proto{font-family:"Segoe UI","Open Sans",Roboto,Helvetica,Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:#111;color:var(--gold);
+    padding:2px 6px;border-radius:2px;margin-top:4px;display:inline-block}
+  .top .spacer{flex:1}
+  .badge-dot{position:relative}
+  .badge-dot[data-count]::after{content:attr(data-count);position:absolute;top:0;right:0;background:var(--bad);color:#fff;
+    font-size:11px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+  .avatar{width:40px;height:40px;border-radius:50%;background:#e6e6e6;color:#333;display:grid;place-items:center;font-size:18px;border:0;cursor:pointer}
+
+/* Tabs */
+  nav.tabs{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 76px;height:50px}
+  nav.tabs button{background:none;border:0;padding:0 21px;font-size:16px;color:#444;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+  nav.tabs button:first-child{padding-left:4px}
+  nav.tabs button.active{font-weight:700;color:#222;border-bottom-color:#555}
+  nav.tabs .spacer{flex:1}
+  .view-all{display:flex;align-items:center;gap:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;font-size:15px;color:#333}
+  .view-all input{border:0;border-bottom:1px solid transparent;outline:0;font:inherit;letter-spacing:inherit;width:190px;background:transparent;text-transform:none;font-weight:400}
+  .view-all input:focus{border-bottom-color:#999}
+  .view-all input::placeholder{text-transform:uppercase;font-weight:700;color:#333;letter-spacing:.1em}
+  .view-all svg{width:18px;height:18px}
+
+/* Grids and Cards for everything */
+  main{padding:16px 76px 40px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 24px}
+  .card{background:var(--card);border-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.18);height:350px;display:flex;flex-direction:column;min-width:0}
+  .card.wide{grid-column:span 2}
+  .card.full{grid-column:1/-1;height:auto;min-height:350px}
+  .card-head{display:flex;align-items:center;padding:18px 16px 10px;gap:6px}
+  .card-head h2{font-size:18px;font-weight:700;margin:0;flex:1;color:var(--ink);letter-spacing:.04em}
+  .card-head .icon-btn{color:#555;padding:4px}
+  .card-head .icon-btn svg{width:20px;height:20px}
+  .card-body{flex:1;overflow:auto;padding:0 0 4px}
+  .card-body::-webkit-scrollbar{width:8px}
+  .card-body::-webkit-scrollbar-thumb{background:#9a9a9a;border-radius:4px}
+
+  .list{list-style:none;margin:0;padding:0}
+  .list li{border-bottom:1px solid var(--line)}
+  .list li>a,.list li>button{display:flex;gap:12px;align-items:center;padding:10px 16px;min-height:48px;text-decoration:none;width:100%;
+    background:none;border:0;text-align:left;cursor:pointer;color:var(--text)}
+  .list li>*:hover{background:#fafafa}
+  .ico{flex:0 0 32px;height:32px;border-radius:50%;background:var(--chip);display:grid;place-items:center;color:#222}
+  .ico svg{width:17px;height:17px}
+  .ico.ok{background:#e3f1e4;color:var(--ok)} .ico.warn{background:#fff1d6;color:var(--warn)} .ico.bad{background:#fde3e3;color:var(--bad)}
+  .li-text{min-width:0;flex:1}
+  .li-title{font-size:15px;text-decoration:underline;text-underline-offset:2px}
+  .li-sub{font-size:12px;text-decoration:underline;text-underline-offset:2px;color:#444;margin-top:2px;line-height:1.45}
+  .li-sub.plain{text-decoration:none;color:var(--muted)}
+  .li-right{font-size:12px;text-align:right;white-space:nowrap}
+
+  /* stats (like the Leave card) */
+  .stats-label{padding:0 16px;font-size:16px;margin:4px 0 18px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;padding:10px 8px 0}
+  .stat{padding:12px 16px;border-right:1px solid var(--line)}
+  .stat:nth-child(2n){border-right:0}
+  .stat .k{font-size:15px}
+  .stat .v{font-size:32px;font-weight:700;color:var(--ink);margin:6px 0 2px}
+  .stat .u{font-size:12px}
+  .stat .v.ok{color:var(--ok)} .stat .v.warn{color:var(--warn)} .stat .v.bad{color:var(--bad)}
+
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .pill.ok{background:#e3f1e4;color:var(--ok)} .pill.warn{background:#fff1d6;color:var(--warn)}
+  .pill.bad{background:#fde3e3;color:var(--bad)} .pill.info{background:#e3edf9;color:var(--info)} .pill.mute{background:#eee;color:#555}
+
+  /* tables (tab views) */
+  table.data{width:100%;border-collapse:collapse;font-size:14px}
+  table.data th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;
+    padding:10px 16px;border-bottom:2px solid var(--line);background:#fafafa;position:sticky;top:0}
+  table.data td{padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.data tr.click{cursor:pointer} table.data tr.click:hover td{background:#fafafa}
+  table.data td a{color:var(--text)}
+
+  .btn{border:1px solid #bbb;background:#fff;border-radius:3px;padding:8px 14px;cursor:pointer;font-size:14px}
+  .btn.primary{background:#222;color:var(--gold);border-color:#222;font-weight:700}
+  .btn.danger{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .toolbar{display:flex;gap:10px;padding:0 16px 12px;flex-wrap:wrap;align-items:center}
+  .toolbar select{padding:7px 8px;border:1px solid #bbb;border-radius:3px;font:inherit;font-size:14px;background:#fff}
+
+  .empty{padding:40px 16px;text-align:center;color:var(--muted)}
+
+/* Modal */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;padding:60px 20px;overflow:auto;z-index:50}
+  .scrim.open{display:flex}
+  .modal{background:#fff;width:min(820px,100%);border-radius:4px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .modal-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:4px solid var(--gold)}
+  .modal-head h3{margin:0;font-size:19px;flex:1;color:var(--ink)}
+  .modal-head .icon-btn{color:#444}
+  .modal-body{padding:18px 20px 22px}
+  .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 20px;margin-bottom:18px}
+  .kv div small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px}
+  .section-h{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;margin:20px 0 6px}
+  .checklist label{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .checklist input{width:20px;height:20px;margin-top:1px;accent-color:#222}
+  .checklist small{display:block;color:var(--muted);font-size:12px}
+  .field{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+  .field label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+  .field select,.field textarea,.field input{font:inherit;font-size:14px;padding:8px;border:1px solid #bbb;border-radius:3px}
+  .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .qr-wrap{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+  .qr-wrap canvas{border:1px solid var(--line);image-rendering:pixelated}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:#222;color:#fff;padding:12px 20px;border-radius:4px;
+    transition:transform .25s;z-index:60;font-size:14px}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* drawer */
+  .drawer{position:fixed;top:0;left:0;bottom:0;width:280px;background:#fff;box-shadow:2px 0 16px rgba(0,0,0,.2);transform:translateX(-100%);transition:transform .2s;z-index:55;padding:20px 0}
+  .drawer.open{transform:none}
+  .drawer h4{margin:0 20px 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .drawer button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 20px;font-size:15px;cursor:pointer}
+  .drawer button:hover{background:#f5f5f5}
+
+  @media (max-width:1300px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:760px){
+    header.top{padding:0 16px;height:84px;gap:12px} nav.tabs{padding:0 8px;overflow-x:auto} nav.tabs .view-all{display:none}
+    main{padding:12px} .grid{grid-template-columns:1fr} .card.wide{grid-column:auto} .kv{grid-template-columns:1fr 1fr}
+    .brand .words b{font-size:15px}.brand .words span{font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="icon-btn" id="menuBtn" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <a class="brand" href="#" onclick="setTab('home');return false;">
+    <img class="logo" src="mtu-logo.png" alt="Michigan Technological University" height="60">
+  </a>
+  <div class="spacer"></div>
+  <button class="icon-btn" title="Check-in checklist" onclick="openChecklist()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M8.5 13.5l2.5 2.5 4.5-5"/></svg></button>
+  <button class="icon-btn badge-dot" id="bellBtn" title="Alerts" onclick="setTab('alerts')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2zM10 20a2 2 0 0 0 4 0"/></svg></button>
+  <button class="avatar" id="avatarBtn" title="">Z</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="home" class="active">Home</button>
+  <button data-tab="inventory">Inventory</button>
+  <button data-tab="inspections">Inspections</button>
+  <button data-tab="service">Service &amp; Compliance</button>
+  <button data-tab="locations">Locations</button>
+  <button data-tab="alerts">Alerts</button>
+  <button data-tab="admin">Admin</button>
+  <div class="spacer"></div>
+  <label class="view-all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="search" placeholder="Search units" aria-label="Search extinguishers"></label>
+</nav>
+
+<main><div id="view"></div></main>
+
+<div class="drawer" id="drawer">
+  <h4>Menu</h4>
+  <button onclick="setTab('home')">Dashboard</button>
+  <button onclick="openChecklist()">Check-in Checklist</button>
+  <button onclick="openReport()">Report an Issue</button>
+  <button onclick="openQR()">QR Code Generator</button>
+  <button onclick="openHelp()">FAQ / Help</button>
+  <button onclick="setTab('admin')">Admin</button>
+</div>
+
+<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true">
+  <div class="modal-head"><h3 id="mTitle"></h3><button class="icon-btn" onclick="closeModal()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="modal-body" id="mBody"></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* 
+   SAMPLE DATA.
+   Used the Schema data to do this, probably later on we link a mysql database to the github so i can use that instead of this.
+   Dates are generated to be today so the due/overdue states stay the same whenever the page is opened. */
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const DAY = 86400000;
+const d  = n => new Date(TODAY.getTime() + n*DAY);          
+const dt = (n,h=10,m=0) => { const x=d(n); x.setHours(h,m); return x; };
+const iso = x => x.toISOString().slice(0,10);
+const addMonths = (x,m) => { const y=new Date(x); y.setMonth(y.getMonth()+m); return y; };
+
+const DB = {
+  users: [
+    { user_id:'U-001', username:'zahammer', full_name:'Z. Hammer',   email:'zahammer@mtu.edu', role:'Safety Admin',    is_active:true },
+    { user_id:'U-002', username:'jlee',     full_name:'Jordan Lee',  email:'jlee@mtu.edu',     role:'Inspector',       is_active:true },
+    { user_id:'U-003', username:'sortiz',   full_name:'Sam Ortiz',   email:'sortiz@mtu.edu',   role:'Facilities Lead', is_active:true },
+  ],
+  service_types: [
+    { service_type_id:1, service_name:'Annual Maintenance',      interval_months:12,  description:'External exam, mechanical parts check, tag replacement', nfpa_reference:'NFPA 10 § 7.3.1' },
+    { service_type_id:2, service_name:'6-Year Internal',         interval_months:72,  description:'Discharge, internal exam, recharge (stored-pressure dry chem)', nfpa_reference:'NFPA 10 § 7.3.1.2' },
+    { service_type_id:3, service_name:'12-Year Hydrostatic Test', interval_months:144, description:'Cylinder hydrostatic pressure test', nfpa_reference:'NFPA 10 § 8.3.1' },
+  ],
+  locations: [
+    { location_id:'LOC-DOW-201',  building_code:'DOW',  floor_number:2,  closest_room_number:'201',          mounting_type:'Wall Bracket',      has_signage:true,  is_accessible_ada:true,  notes:'East stairwell landing' },
+    { location_id:'LOC-MEEM-112', building_code:'MEEM', floor_number:1,  closest_room_number:'112',          mounting_type:'Recessed Cabinet',  has_signage:true,  is_accessible_ada:true,  notes:'Outside machine shop' },
+    { location_id:'LOC-EERC-B012',building_code:'EERC', floor_number:-1, closest_room_number:'B012',         mounting_type:'Wall Bracket',      has_signage:true,  is_accessible_ada:true,  notes:'Basement kitchen / break room' },
+    { location_id:'LOC-LIB-310',  building_code:'LIB',  floor_number:3,  closest_room_number:'310',          mounting_type:'Surface Cabinet',   has_signage:false, is_accessible_ada:true,  notes:'Near study rooms, north wall' },
+    { location_id:'LOC-REK-214',  building_code:'REKHI',floor_number:2,  closest_room_number:'Corridor 2-C', mounting_type:'Wall Bracket',      has_signage:true,  is_accessible_ada:false, notes:'Handle mounted at 58 in — needs lowering' },
+  ],
+  extinguishers: [
+    { extinguisher_id:'EXT-0001', serial_number:'AMX-19-448210', manufacturer:'Amerex', model_number:'B500', extinguisher_type:'ABC Dry Chemical', capacity_rating:'10 lb - 4A:80B:C', manufacture_year:2019, status:'Active',          notes:'' },
+    { extinguisher_id:'EXT-0002', serial_number:'ANS-21-00917',  manufacturer:'Ansul',  model_number:'CD10', extinguisher_type:'CO2',              capacity_rating:'10 lb - 10B:C',    manufacture_year:2021, status:'Active',          notes:'' },
+    { extinguisher_id:'EXT-0003', serial_number:'AMX-22-771035', manufacturer:'Amerex', model_number:'B260', extinguisher_type:'Class K Wet Chemical', capacity_rating:'6 L - 2A:K',  manufacture_year:2022, status:'Active',          notes:'' },
+    { extinguisher_id:'EXT-0004', serial_number:'BDG-17-305552', manufacturer:'Badger', model_number:'B5MB', extinguisher_type:'ABC Dry Chemical', capacity_rating:'5 lb - 3A:40B:C',  manufacture_year:2017, status:'Out for Service', notes:'Hose cracked during March inspection; replaced in shop.' },
+    { extinguisher_id:'EXT-0005', serial_number:'AMX-18-120984', manufacturer:'Amerex', model_number:'B402', extinguisher_type:'ABC Dry Chemical', capacity_rating:'10 lb - 4A:80B:C', manufacture_year:2018, status:'Active',          notes:'' },
+  ],
+  deployments: [
+    { deployment_id:'DEP-001', extinguisher_id:'EXT-0001', location_id:'LOC-DOW-201',   installed_date:iso(d(-900)), removed_date:null,        is_current:true },
+    { deployment_id:'DEP-002', extinguisher_id:'EXT-0002', location_id:'LOC-MEEM-112',  installed_date:iso(d(-700)), removed_date:null,        is_current:true },
+    { deployment_id:'DEP-003', extinguisher_id:'EXT-0003', location_id:'LOC-EERC-B012', installed_date:iso(d(-400)), removed_date:null,        is_current:true },
+    { deployment_id:'DEP-004', extinguisher_id:'EXT-0004', location_id:'LOC-LIB-310',   installed_date:iso(d(-1500)),removed_date:iso(d(-6)),  is_current:false },
+    { deployment_id:'DEP-005', extinguisher_id:'EXT-0005', location_id:'LOC-REK-214',   installed_date:iso(d(-1200)),removed_date:null,        is_current:true },
+  ],
+  inspections_monthly: [
+    insp('INS-101','EXT-0001','U-002',-42,'Pass'),
+    insp('INS-102','EXT-0001','U-002',-12,'Pass'),
+    insp('INS-103','EXT-0002','U-002',-34,'Pass'),
+    insp('INS-104','EXT-0003','U-003',-36,'Pass'),
+    insp('INS-105','EXT-0003','U-002',-5,'Needs Attention',{gauge_in_green:false},'Needle at edge of green band; flagged for service vendor.'),
+    insp('INS-106','EXT-0004','U-002',-7,'Fail',{physical_condition_pass:false},'Hose cracked at nozzle. Unit pulled and sent out for service.'),
+    insp('INS-107','EXT-0005','U-003',-20,'Pass',{},'Mounted too high (ADA) — see location note.'),
+  ],
+  services: [
+    svc('SVC-201','EXT-0001',1,-245,'Northland Fire Protection','MI-FE-20431'),
+    svc('SVC-202','EXT-0002',1,-361,'Northland Fire Protection','MI-FE-20431'),
+    svc('SVC-203','EXT-0003',1,-165,'Copper Country Fire & Safety','MI-FE-18820'),
+    svc('SVC-204','EXT-0004',1,-368,'Northland Fire Protection','MI-FE-20431'),
+    svc('SVC-205','EXT-0005',1,-150,'Copper Country Fire & Safety','MI-FE-18820'),
+    { service_id:'SVC-206', extinguisher_id:'EXT-0005', service_type_id:2, service_date:iso(d(-2205)), next_service_due:iso(d(-15)),
+      vendor_company:'Copper Country Fire & Safety', technician_license_no:'MI-FE-18820', certificate_url:'#', notes:'6-year internal from 2020 cycle' },
+  ],
+  alerts: [] 
+};
+
+function insp(id,ext,who,daysAgo,result,overrides={},notes=''){
+  return Object.assign({ inspection_id:id, extinguisher_id:ext, inspector_id:who, inspection_timestamp:dt(daysAgo,9+(id.charCodeAt(6)%7),15).toISOString(),
+    is_present:true,is_unobstructed:true,pin_tamper_seal_intact:true,gauge_in_green:true,physical_condition_pass:true,heft_check_pass:true,
+    overall_result:result, remediation_notes:notes }, overrides);
+}
+function svc(id,ext,type,daysAgo,vendor,lic){
+  const t = {1:12,2:72,3:144}[type];
+  return { service_id:id, extinguisher_id:ext, service_type_id:type, service_date:iso(d(daysAgo)), next_service_due:iso(addMonths(d(daysAgo),t)),
+    vendor_company:vendor, technician_license_no:lic, certificate_url:'#', notes:'' };
+}
+
+/*  Derived data and helpers  */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = x => x ? new Date(x).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}) : '—';
+const fmtDT = x => new Date(x).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+const daysBetween = (a,b) => Math.round((new Date(b).setHours(0,0,0,0) - new Date(a).setHours(0,0,0,0))/DAY);
+const user = id => DB.users.find(u=>u.user_id===id) || {full_name:'Unknown'};
+const CURRENT_USER = DB.users[0];
+
+function currentLocation(extId){
+  const dep = DB.deployments.find(x=>x.extinguisher_id===extId && x.is_current)
+           || [...DB.deployments].filter(x=>x.extinguisher_id===extId).sort((a,b)=>b.installed_date.localeCompare(a.installed_date))[0];
+  const loc = dep && DB.locations.find(l=>l.location_id===dep.location_id);
+  return { dep, loc };
+}
+function locLabel(loc){ if(!loc) return 'Unassigned'; const f = loc.floor_number<0?`B${-loc.floor_number}`:`Fl ${loc.floor_number}`; return `${loc.building_code} · ${f} · Rm ${loc.closest_room_number}`; }
+
+function lastInspection(extId){
+  return DB.inspections_monthly.filter(i=>i.extinguisher_id===extId).sort((a,b)=>b.inspection_timestamp.localeCompare(a.inspection_timestamp))[0];
+}
+function lastService(extId){
+  return DB.services.filter(s=>s.extinguisher_id===extId).sort((a,b)=>b.service_date.localeCompare(a.service_date))[0];
+}
+/* v_service_status: latest record per (extinguisher, service type) */
+function serviceStatus(){
+  const latest = {};
+  DB.services.forEach(s=>{ const k=s.extinguisher_id+'|'+s.service_type_id; if(!latest[k]||latest[k].service_date<s.service_date) latest[k]=s; });
+  return Object.values(latest).map(s=>{
+    const days = daysBetween(TODAY, s.next_service_due);
+    const status = days < -7 ? '>1 week past due' : days <= -1 ? '<1 week past due' : days <= 7 ? '<1 week till due' : 'OK';
+    return { extinguisher_id:s.extinguisher_id, service_name:DB.service_types.find(t=>t.service_type_id===s.service_type_id).service_name,
+      next_service_due:s.next_service_due, days_remaining:days, service_due_status:status };
+  }).sort((a,b)=>a.days_remaining-b.days_remaining);
+}
+const statusPill = s => ({ '>1 week past due':'bad','<1 week past due':'bad','<1 week till due':'warn','OK':'ok' }[s]);
+const resultPill = r => ({Pass:'ok',Fail:'bad','Needs Attention':'warn'}[r]||'mute');
+const lifePill   = s => ({Active:'ok','Out for Service':'warn','In Storage':'mute',Condemned:'bad'}[s]||'mute');
+
+/* inspection health: 31-day max cycle (NFPA 10 § 7.2.1.2) */
+function inspectionState(extId){
+  const li = lastInspection(extId);
+  if(!li) return {days:null, cls:'bad', label:'Never inspected'};
+  const days = daysBetween(li.inspection_timestamp, TODAY);
+  if(days > 31) return {days, cls:'bad', label:`${days} days — overdue`};
+  if(days >= 25) return {days, cls:'warn', label:`${days} days — due soon`};
+  return {days, cls:'ok', label:`${days} days ago`};
+}
+
+function buildAlerts(){
+  const sys = [];
+  serviceStatus().forEach(s=>{ if(s.service_due_status!=='OK') sys.push({
+    id:'A-svc-'+s.extinguisher_id+s.service_name, level:statusPill(s.service_due_status), ext:s.extinguisher_id, kind:'Service',
+    title:`${s.service_name} ${s.days_remaining<0?'past due':'due soon'}`, detail:`${s.service_due_status} · due ${fmtDate(s.next_service_due)}`, ts:TODAY.toISOString() }); });
+  DB.extinguishers.forEach(e=>{
+    if(e.status!=='Active') return;
+    const st=inspectionState(e.extinguisher_id);
+    if(st.cls!=='ok') sys.push({id:'A-ins-'+e.extinguisher_id, level:st.cls, ext:e.extinguisher_id, kind:'Inspection', title:'Monthly inspection '+(st.cls==='bad'?'overdue':'due soon'), detail:`Last check ${st.label}`, ts:TODAY.toISOString()});
+    const li=lastInspection(e.extinguisher_id);
+    if(li && li.overall_result!=='Pass') sys.push({id:'A-fail-'+li.inspection_id, level:resultPill(li.overall_result), ext:e.extinguisher_id, kind:'Inspection result', title:`Inspection: ${li.overall_result}`, detail:li.remediation_notes, ts:li.inspection_timestamp});
+  });
+  DB.locations.forEach(l=>{
+    if(!l.has_signage) sys.push({id:'A-sign-'+l.location_id, level:'warn', loc:l.location_id, kind:'Location', title:'Missing signage', detail:locLabel(l), ts:TODAY.toISOString()});
+    if(!l.is_accessible_ada) sys.push({id:'A-ada-'+l.location_id, level:'warn', loc:l.location_id, kind:'Location', title:'Mounting height not ADA compliant', detail:locLabel(l), ts:TODAY.toISOString()});
+  });
+  return [...DB.alerts, ...sys].sort((a,b)=>({bad:0,warn:1,info:2}[a.level]-({bad:0,warn:1,info:2}[b.level])));
+}
+
+// Icons 
+const I = {
+  ext:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 2h6v2.5h-1v2a5 5 0 0 1 3.5 4.8V21a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9.7A5 5 0 0 1 10 6.5v-2H9V2zM4 5h5v1.6H5.2L3.6 9H2l2-4z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 4h6v3H9zM6 6H5v15h14V6h-1"/><path d="m9 14 2 2 4-4"/></svg>',
+  alert:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path fill="#fff" d="M11 6h2v8h-2zM11 16h2v2h-2z"/></svg>',
+  qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM18 18h3v3M14 21h1"/></svg>',
+  help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14M12 17h.01"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  wrench:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6z"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  dots:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>',
+  shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>',
+  audit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+};
+
+// Rendering
+//
+let TAB='home', QUERY='';
+function card({title, body, cls='', icon='lock', id=''}){
+  const right = icon==='lock' ? `<button class="icon-btn" title="Pinned">${I.lock}</button>`
+              : `<button class="icon-btn" title="More">${I.dots}</button><button class="icon-btn" title="Bookmarked">${I.bookmark}</button>`;
+  return `<section class="card ${cls}" ${id?`id="${id}"`:''}><div class="card-head"><h2>${title}</h2>${right}</div><div class="card-body">${body}</div></section>`;
+}
+function li({icon, title, sub='', right='', onclick='', icls='', plainSub=false}){
+  return `<li><button onclick="${onclick}"><span class="ico ${icls}">${icon}</span><span class="li-text"><div class="li-title">${title}</div>${sub?`<div class="li-sub ${plainSub?'plain':''}">${sub}</div>`:''}</span>${right?`<span class="li-right">${right}</span>`:''}</button></li>`;
+}
+function matches(e){
+  if(!QUERY) return true;
+  const {loc}=currentLocation(e.extinguisher_id);
+  return [e.extinguisher_id,e.serial_number,e.manufacturer,e.model_number,e.extinguisher_type,e.capacity_rating,e.status,loc&&locLabel(loc),loc&&loc.location_id]
+    .join(' ').toLowerCase().includes(QUERY);
+}
+
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===TAB));
+  const alerts = buildAlerts();
+  $('#bellBtn').dataset.count = alerts.filter(a=>a.level==='bad').length || '';
+  if(!$('#bellBtn').dataset.count) delete $('#bellBtn').dataset.count;
+  const v = { home:viewHome, inventory:viewInventory, inspections:viewInspections, service:viewService, locations:viewLocations, alerts:viewAlerts, admin:viewAdmin }[TAB];
+  $('#view').innerHTML = v(alerts);
+}
+
+function viewHome(alerts){
+  const exts = DB.extinguishers.filter(matches);
+  const ss = serviceStatus();
+  const active = DB.extinguishers.filter(e=>e.status==='Active');
+  const inspOverdue = active.filter(e=>inspectionState(e.extinguisher_id).cls==='bad').length;
+  const svcPast = ss.filter(s=>s.days_remaining<0).length;
+  const svcSoon = ss.filter(s=>s.days_remaining>=0 && s.days_remaining<=30).length;
+  const compliant = active.filter(e=>inspectionState(e.extinguisher_id).cls!=='bad' && !ss.some(s=>s.extinguisher_id===e.extinguisher_id && s.days_remaining<0)).length;
+
+  const quick = `<ul class="list">
+    ${li({icon:I.check, title:'Check-in Checklist', sub:'Log a monthly inspection for a unit', onclick:'openChecklist()'})}
+    ${li({icon:I.alert, title:'Report an Issue', sub:'Missing, damaged, discharged or blocked unit', onclick:'openReport()'})}
+    ${li({icon:I.qr, title:'QR Code Generator', sub:'Print tags for extinguisher barcodes', onclick:'openQR()'})}
+    ${li({icon:I.list, title:'Extinguisher Inventory', onclick:"setTab('inventory')"})}
+    ${li({icon:I.help, title:'FAQ / Help', onclick:'openHelp()'})}
+    ${li({icon:I.info, title:'NFPA 10 Inspection Guide', sub:'What each checklist item means', onclick:'openHelp(1)'})}
+  </ul>`;
+
+  const compliance = `<div class="stats-label">Fleet status · ${DB.extinguishers.length} units</div>
+    <div class="stats">
+      <div class="stat"><div class="k">Compliant</div><div class="v ok">${compliant}/${active.length}</div><div class="u">Active units</div></div>
+      <div class="stat"><div class="k">Inspection Overdue</div><div class="v ${inspOverdue?'bad':'ok'}">${inspOverdue}</div><div class="u">&gt; 31 days</div></div>
+      <div class="stat" style="border-top:1px solid var(--line)"><div class="k">Service Past Due</div><div class="v ${svcPast?'bad':'ok'}">${svcPast}</div><div class="u">Records</div></div>
+      <div class="stat" style="border-top:1px solid var(--line)"><div class="k">Due ≤ 30 days</div><div class="v ${svcSoon?'warn':'ok'}">${svcSoon}</div><div class="u">Records</div></div>
+    </div>`;
+
+  const inv = exts.length ? `<ul class="list">${exts.map(e=>{
+      const {loc}=currentLocation(e.extinguisher_id); const st=inspectionState(e.extinguisher_id);
+      return li({icon:I.ext, icls:e.status==='Active'?st.cls:'warn', title:`${e.extinguisher_id} — ${esc(e.extinguisher_type)}`,
+        sub:`${esc(locLabel(loc))} · ${esc(e.capacity_rating)}`, onclick:`openExt('${e.extinguisher_id}')`});
+    }).join('')}</ul>` : `<div class="empty">No units match “${esc(QUERY)}”.</div>`;
+
+  const alertList = alerts.length ? `<ul class="list">${alerts.slice(0,8).map(a=>li({icon:I.alert, icls:a.level, title:esc(a.title),
+      sub:`${a.ext?a.ext+' · ':''}${esc(a.detail)}`, onclick:a.ext?`openExt('${a.ext}')`:"setTab('alerts')"})).join('')}</ul>` : '<div class="empty">No alerts 🎉</div>';
+
+  const svcCard = `<ul class="list">${ss.map(s=>li({icon:I.wrench, icls:statusPill(s.service_due_status), title:`${s.extinguisher_id} — ${s.service_name}`,
+      sub:`Due ${fmtDate(s.next_service_due)}`, plainSub:true,
+      right:`<span class="pill ${statusPill(s.service_due_status)}">${s.days_remaining<0?Math.abs(s.days_remaining)+'d late':s.days_remaining+'d'}</span>`,
+      onclick:`openExt('${s.extinguisher_id}')`})).join('')}</ul>`;
+
+  const recent = [...DB.inspections_monthly].sort((a,b)=>b.inspection_timestamp.localeCompare(a.inspection_timestamp)).slice(0,6);
+  const recentCard = `<ul class="list">${recent.map(i=>li({icon:I.clock, icls:resultPill(i.overall_result), title:`${i.extinguisher_id} — ${i.overall_result}`,
+      sub:`${fmtDT(i.inspection_timestamp)} · ${esc(user(i.inspector_id).full_name)}`, plainSub:true, onclick:`openExt('${i.extinguisher_id}')`})).join('')}</ul>`;
+
+  const locCard = `<ul class="list">${[...new Set(DB.locations.map(l=>l.building_code))].map(b=>{
+      const n = DB.deployments.filter(dp=>dp.is_current && DB.locations.find(l=>l.location_id===dp.location_id).building_code===b).length;
+      return li({icon:I.pin, title:b, sub:`${n} active unit${n===1?'':'s'}`, plainSub:true, onclick:`QUERY='${b.toLowerCase()}';$('#search').value='${b}';setTab('inventory')`});
+    }).join('')}</ul>`;
+
+  const me = `<ul class="list">
+    ${li({icon:I.user, title:esc(CURRENT_USER.full_name), sub:`${CURRENT_USER.role} · ${CURRENT_USER.email}`, plainSub:true, onclick:'openProfile()'})}
+    ${li({icon:I.check, title:'My inspections', sub:`${DB.inspections_monthly.filter(i=>i.inspector_id===CURRENT_USER.user_id).length} logged`, plainSub:true, onclick:"setTab('inspections')"})}
+    ${li({icon:I.shield, title:'Roles & Permissions', onclick:"setTab('admin')"})}
+    ${li({icon:I.audit, title:'Audit Log', onclick:"setTab('admin')"})}
+  </ul>`;
+
+  return `<div class="grid">
+    ${card({title:'Quick Links', body:quick})}
+    ${card({title:'Compliance Overview', body:compliance, icon:'more'})}
+    ${card({title:'Alerts', body:alertList, icon:'more'})}
+    ${card({title:'My Account', body:me})}
+    ${card({title:'Extinguishers', body:inv, icon:'more'})}
+    ${card({title:'Service Due', body:svcCard, icon:'more'})}
+    ${card({title:'Recent Inspections', body:recentCard, icon:'more'})}
+    ${card({title:'Buildings', body:locCard, icon:'more'})}
+  </div>`;
+}
+
+function viewInventory(){
+  const exts = DB.extinguishers.filter(matches);
+  const rows = exts.map(e=>{
+    const {loc}=currentLocation(e.extinguisher_id); const st=inspectionState(e.extinguisher_id); const ls=lastService(e.extinguisher_id);
+    return `<tr class="click" onclick="openExt('${e.extinguisher_id}')">
+      <td><b>${e.extinguisher_id}</b><br><small style="color:var(--muted)">S/N ${esc(e.serial_number)}</small></td>
+      <td>${esc(e.extinguisher_type)}<br><small style="color:var(--muted)">${esc(e.capacity_rating)}</small></td>
+      <td>${esc(e.manufacturer)} ${esc(e.model_number||'')}<br><small style="color:var(--muted)">Mfd ${e.manufacture_year}</small></td>
+      <td>${esc(locLabel(loc))}</td>
+      <td><span class="pill ${st.cls}">${st.label}</span></td>
+      <td>${ls?fmtDate(ls.service_date):'—'}</td>
+      <td><span class="pill ${lifePill(e.status)}">${e.status}</span></td></tr>`;
+  }).join('');
+  return `<div class="grid">${card({cls:'full', title:`Extinguisher Inventory (${exts.length})`, icon:'more', body:`
+    <div class="toolbar"><button class="btn primary" onclick="openAddExt()">+ Add extinguisher</button><button class="btn" onclick="openQR()">Print QR tags</button>
+    ${QUERY?`<span class="pill info">Filter: ${esc(QUERY)}</span><button class="btn" onclick="QUERY='';$('#search').value='';render()">Clear</button>`:''}</div>
+    ${exts.length?`<table class="data"><thead><tr><th>Unit</th><th>Type / Rating</th><th>Make</th><th>Location</th><th>Last Check</th><th>Last Service</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty">No matches.</div>'}`})}</div>`;
+}
+
+function viewInspections(){
+  const rows=[...DB.inspections_monthly].sort((a,b)=>b.inspection_timestamp.localeCompare(a.inspection_timestamp)).filter(i=>matches(DB.extinguishers.find(e=>e.extinguisher_id===i.extinguisher_id))).map(i=>{
+    const fails = CHECKS.filter(c=>!i[c.key]).map(c=>c.short);
+    return `<tr class="click" onclick="openExt('${i.extinguisher_id}')"><td>${fmtDT(i.inspection_timestamp)}</td><td><b>${i.extinguisher_id}</b></td>
+      <td>${esc(user(i.inspector_id).full_name)}</td><td><span class="pill ${resultPill(i.overall_result)}">${i.overall_result}</span></td>
+      <td>${fails.length?fails.map(f=>`<span class="pill bad">${f}</span>`).join(' '):'<span style="color:var(--muted)">All checks passed</span>'}</td>
+      <td>${esc(i.remediation_notes)||'—'}</td></tr>`; }).join('');
+  return `<div class="grid">${card({cls:'full', title:'Monthly Inspections', icon:'more', body:`
+    <div class="toolbar"><button class="btn primary" onclick="openChecklist()">+ New check-in</button></div>
+    <table class="data"><thead><tr><th>When</th><th>Unit</th><th>Inspector</th><th>Result</th><th>Failed items</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table>`})}</div>`;
+}
+
+function viewService(){
+  const ss = serviceStatus().filter(s=>matches(DB.extinguishers.find(e=>e.extinguisher_id===s.extinguisher_id)));
+  const rows = ss.map(s=>`<tr class="click" onclick="openExt('${s.extinguisher_id}')"><td><b>${s.extinguisher_id}</b></td><td>${s.service_name}</td>
+    <td>${fmtDate(s.next_service_due)}</td><td>${s.days_remaining}</td><td><span class="pill ${statusPill(s.service_due_status)}">${s.service_due_status}</span></td></tr>`).join('');
+  const types = DB.service_types.map(t=>`<tr><td>${t.service_name}</td><td>${t.interval_months} mo</td><td>${esc(t.description)}</td><td>${t.nfpa_reference}</td></tr>`).join('');
+  return `<div class="grid">
+    ${card({cls:'full', title:'Service Due Status (v_service_status)', icon:'more', body:`<table class="data"><thead><tr><th>Unit</th><th>Service</th><th>Next Due</th><th>Days Remaining</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`})}
+    ${card({cls:'full', title:'Service Types', body:`<table class="data"><thead><tr><th>Service</th><th>Interval</th><th>Scope</th><th>Reference</th></tr></thead><tbody>${types}</tbody></table>`})}
+  </div>`;
+}
+
+function viewLocations(){
+  const rows = DB.locations.map(l=>{
+    const dep = DB.deployments.find(x=>x.location_id===l.location_id && x.is_current);
+    return `<tr><td><b>${l.location_id}</b></td><td>${l.building_code}</td><td>${l.floor_number}</td><td>${esc(l.closest_room_number)}</td><td>${l.mounting_type}</td>
+      <td><span class="pill ${l.has_signage?'ok':'warn'}">${l.has_signage?'Yes':'No'}</span></td><td><span class="pill ${l.is_accessible_ada?'ok':'warn'}">${l.is_accessible_ada?'Yes':'No'}</span></td>
+      <td>${dep?`<a href="#" onclick="openExt('${dep.extinguisher_id}');return false">${dep.extinguisher_id}</a>`:'<span class="pill mute">Empty</span>'}</td><td>${esc(l.notes)}</td></tr>`;}).join('');
+  return `<div class="grid">${card({cls:'full', title:'Location List', icon:'more', body:`<table class="data"><thead><tr><th>Location</th><th>Bldg</th><th>Floor</th><th>Room</th><th>Mount</th><th>Signage</th><th>ADA</th><th>Current Unit</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table>`})}</div>`;
+}
+
+function viewAlerts(alerts){
+  const rows = alerts.map(a=>`<tr class="${a.ext?'click':''}" ${a.ext?`onclick="openExt('${a.ext}')"`:''}><td><span class="pill ${a.level}">${{bad:'Critical',warn:'Warning',info:'Info'}[a.level]}</span></td>
+    <td>${a.kind}</td><td><b>${esc(a.title)}</b><br><small style="color:var(--muted)">${esc(a.detail)}</small></td><td>${a.ext||a.loc||'—'}</td><td>${a.user?esc(a.user):'System'}</td></tr>`).join('');
+  return `<div class="grid">${card({cls:'full', title:`Alerts (${alerts.length})`, icon:'more', body:`
+    <div class="toolbar"><button class="btn primary" onclick="openReport()">+ Report an issue</button><span style="font-size:13px;color:var(--muted)">In production these would also be emailed to the IT / Facilities team.</span></div>
+    <table class="data"><thead><tr><th>Level</th><th>Type</th><th>Alert</th><th>Ref</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table>`})}</div>`;
+}
+
+let AUDIT = [
+  {ts:dt(-7,14,2), who:'U-002', action:'UPDATE', target:'EXT-0004', detail:'status: Active → Out for Service'},
+  {ts:dt(-6,8,40), who:'U-003', action:'UPDATE', target:'DEP-004',  detail:'removed_date set; is_current → false'},
+  {ts:dt(-30,11,5),who:'U-001', action:'CREATE', target:'U-003',    detail:'User added with role Facilities Lead'},
+];
+function viewAdmin(){
+  const users = DB.users.map(u=>`<tr><td><b>${esc(u.full_name)}</b><br><small style="color:var(--muted)">${u.username}</small></td><td>${u.email}</td>
+    <td><select onchange="setRole('${u.user_id}',this.value)">${['Inspector','Facilities Lead','Safety Admin'].map(r=>`<option ${r===u.role?'selected':''}>${r}</option>`).join('')}</select></td>
+    <td><span class="pill ${u.is_active?'ok':'mute'}">${u.is_active?'Active':'Inactive'}</span></td></tr>`).join('');
+  const audit = [...AUDIT].sort((a,b)=>b.ts-a.ts).map(a=>`<tr><td>${fmtDT(a.ts)}</td><td>${esc(user(a.who).full_name)}</td><td><span class="pill info">${a.action}</span></td><td>${a.target}</td><td>${esc(a.detail)}</td></tr>`).join('');
+  const perms = `<table class="data"><thead><tr><th>Permission</th><th>Inspector</th><th>Facilities Lead</th><th>Safety Admin</th></tr></thead><tbody>
+    ${[['Log inspections',1,1,1],['Report issues',1,1,1],['Edit locations',0,1,1],['Add / remove extinguishers',0,1,1],['Log service records',0,1,1],['Manage users & roles',0,0,1],['View audit log',0,1,1]]
+      .map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(x=>`<td>${x?'<span class="pill ok">✓</span>':'<span class="pill mute">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  return `<div class="grid">
+    ${card({cls:'wide', title:'Users & Roles', body:`<table class="data"><thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th></tr></thead><tbody>${users}</tbody></table>`})}
+    ${card({cls:'wide', title:'Role Permissions', body:perms})}
+    ${card({cls:'full', title:'Audit Log', icon:'more', body:`<table class="data"><thead><tr><th>When</th><th>User</th><th>Action</th><th>Target</th><th>Change</th></tr></thead><tbody>${audit}</tbody></table>`})}
+  </div>`;
+}
+function setRole(id,r){ const u=DB.users.find(x=>x.user_id===id); AUDIT.push({ts:new Date(),who:CURRENT_USER.user_id,action:'UPDATE',target:id,detail:`role: ${u.role} → ${r}`}); u.role=r; toast(`${u.full_name} is now ${r}`); render(); }
+
+// Modals 
+function openModal(title, html){ $('#mTitle').textContent=title; $('#mBody').innerHTML=html; $('#scrim').classList.add('open'); $('#drawer').classList.remove('open'); }
+function closeModal(){ $('#scrim').classList.remove('open'); }
+$('#scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeModal(); $('#drawer').classList.remove('open'); }});
+
+function openExt(id){
+  const e = DB.extinguishers.find(x=>x.extinguisher_id===id); const {loc,dep}=currentLocation(id);
+  const st=inspectionState(id); const li_=lastInspection(id); const ls=lastService(id);
+  const ss=serviceStatus().filter(s=>s.extinguisher_id===id);
+  const ins=DB.inspections_monthly.filter(i=>i.extinguisher_id===id).sort((a,b)=>b.inspection_timestamp.localeCompare(a.inspection_timestamp));
+  const svcs=DB.services.filter(s=>s.extinguisher_id===id).sort((a,b)=>b.service_date.localeCompare(a.service_date));
+  const deps=DB.deployments.filter(x=>x.extinguisher_id===id);
+  const kv=(k,v)=>`<div><small>${k}</small>${v}</div>`;
+  openModal(`${id} — ${e.extinguisher_type}`, `
+    <div class="kv">
+      ${kv('Status',`<span class="pill ${lifePill(e.status)}">${e.status}</span>`)}
+      ${kv('Serial number',esc(e.serial_number))}
+      ${kv('Manufacturer / Model',`${esc(e.manufacturer)} ${esc(e.model_number||'')}`)}
+      ${kv('Capacity / Rating',esc(e.capacity_rating))}
+      ${kv('Manufacture year',`${e.manufacture_year} <small style="display:inline;color:var(--muted)">(${TODAY.getFullYear()-e.manufacture_year} yrs)</small>`)}
+      ${kv('Location',`${esc(locLabel(loc))}${dep&&!dep.is_current?' <span class="pill warn">removed</span>':''}`)}
+      ${kv('Days since last check',`<span class="pill ${st.cls}">${st.label}</span>`)}
+      ${kv('Last checked by',li_?esc(user(li_.inspector_id).full_name):'—')}
+      ${kv('Last maintenance',ls?`${fmtDate(ls.service_date)} (${daysBetween(ls.service_date,TODAY)} days ago)`:'—')}
+      ${kv('Maintenance by',ls?`${esc(ls.vendor_company)}<br><small style="display:inline;color:var(--muted)">Lic. ${esc(ls.technician_license_no)}</small>`:'—')}
+      ${kv('Mounting',loc?`${loc.mounting_type}`:'—')}
+      ${kv('Notes',esc(e.notes)||'—')}
+    </div>
+    <div class="actions" style="justify-content:flex-start;margin:0 0 6px">
+      <button class="btn primary" onclick="openChecklist('${id}')">Log check-in</button>
+      <button class="btn" onclick="openReport('${id}')">Report issue</button>
+      <button class="btn" onclick="openQR('${id}')">QR tag</button>
+    </div>
+    <div class="section-h">Service status</div>
+    <table class="data"><thead><tr><th>Service</th><th>Next due</th><th>Days</th><th>Status</th></tr></thead><tbody>
+      ${ss.map(s=>`<tr><td>${s.service_name}</td><td>${fmtDate(s.next_service_due)}</td><td>${s.days_remaining}</td><td><span class="pill ${statusPill(s.service_due_status)}">${s.service_due_status}</span></td></tr>`).join('')||'<tr><td colspan=4>No records</td></tr>'}
+    </tbody></table>
+    <div class="section-h">Inspection history</div>
+    <table class="data"><thead><tr><th>When</th><th>Inspector</th><th>Result</th><th>Notes</th></tr></thead><tbody>
+      ${ins.map(i=>`<tr><td>${fmtDT(i.inspection_timestamp)}</td><td>${esc(user(i.inspector_id).full_name)}</td><td><span class="pill ${resultPill(i.overall_result)}">${i.overall_result}</span></td><td>${esc(i.remediation_notes)||'—'}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="section-h">Service history</div>
+    <table class="data"><thead><tr><th>Date</th><th>Service</th><th>Vendor</th><th>Notes</th></tr></thead><tbody>
+      ${svcs.map(s=>`<tr><td>${fmtDate(s.service_date)}</td><td>${DB.service_types.find(t=>t.service_type_id===s.service_type_id).service_name}</td><td>${esc(s.vendor_company)}</td><td>${esc(s.notes)||'—'}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="section-h">Deployment history</div>
+    <table class="data"><thead><tr><th>Location</th><th>Installed</th><th>Removed</th></tr></thead><tbody>
+      ${deps.map(x=>`<tr><td>${x.location_id}</td><td>${fmtDate(x.installed_date)}</td><td>${x.removed_date?fmtDate(x.removed_date):'<span class="pill ok">Current</span>'}</td></tr>`).join('')}
+    </tbody></table>`);
+}
+
+const CHECKS = [
+  {key:'is_present',              short:'Missing',     label:'Unit is present',                    help:'In its bracket or cabinet at the designated location.'},
+  {key:'is_unobstructed',         short:'Obstructed',  label:'Visible and unobstructed',           help:'Clear line of sight and nothing blocking access.'},
+  {key:'pin_tamper_seal_intact',  short:'Seal broken', label:'Pin and tamper seal intact',         help:'Locking pull-pin in place; seal unbroken.'},
+  {key:'gauge_in_green',          short:'Gauge',       label:'Pressure gauge in the green',        help:'Needle within the operable range (skip for CO₂ — no gauge).'},
+  {key:'physical_condition_pass', short:'Damage',      label:'No physical damage',                 help:'No corrosion, dents, leaks, cracked hose or blocked nozzle.'},
+  {key:'heft_check_pass',         short:'Heft',        label:'Heft check — feels full',            help:'Lift to confirm agent weight.'},
+];
+function openChecklist(id){
+  const opts = DB.extinguishers.map(e=>`<option value="${e.extinguisher_id}" ${e.extinguisher_id===id?'selected':''}>${e.extinguisher_id} — ${esc(locLabel(currentLocation(e.extinguisher_id).loc))}</option>`).join('');
+  openModal('Monthly Check-in', `
+    <div class="field"><label>Extinguisher (scan QR or choose)</label><select id="ckExt">${opts}</select></div>
+    <div class="checklist">${CHECKS.map(c=>`<label><input type="checkbox" data-k="${c.key}" checked><span>${c.label}<small>${c.help}</small></span></label>`).join('')}</div>
+    <div class="field"><label>Notes (required if anything fails)</label><textarea id="ckNotes" rows="3" placeholder="Describe any deficiency…"></textarea></div>
+    <div style="font-size:13px;color:var(--muted)">Inspector: <b>${esc(CURRENT_USER.full_name)}</b> · Timestamp recorded on submit</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="submitChecklist()">Submit check-in</button></div>`);
+}
+function submitChecklist(){
+  const rec = { inspection_id:'INS-'+(Date.now()%100000), extinguisher_id:$('#ckExt').value, inspector_id:CURRENT_USER.user_id, inspection_timestamp:new Date().toISOString(), remediation_notes:$('#ckNotes').value.trim() };
+  document.querySelectorAll('.checklist input').forEach(i=>rec[i.dataset.k]=i.checked);
+  const fails = CHECKS.filter(c=>!rec[c.key]);
+  if(fails.length && !rec.remediation_notes){ $('#ckNotes').focus(); $('#ckNotes').style.borderColor='var(--bad)'; toast('Add a note describing what failed'); return; }
+  rec.overall_result = !fails.length ? 'Pass' : fails.some(c=>['is_present','pin_tamper_seal_intact','physical_condition_pass'].includes(c.key)) ? 'Fail' : 'Needs Attention';
+  DB.inspections_monthly.push(rec);
+  AUDIT.push({ts:new Date(),who:CURRENT_USER.user_id,action:'CREATE',target:rec.inspection_id,detail:`Inspection on ${rec.extinguisher_id}: ${rec.overall_result}`});
+  closeModal(); toast(`Check-in saved for ${rec.extinguisher_id}: ${rec.overall_result}${rec.overall_result!=='Pass'?' — alert raised':''}`); render();
+}
+
+function openReport(id){
+  const opts = DB.extinguishers.map(e=>`<option value="${e.extinguisher_id}" ${e.extinguisher_id===id?'selected':''}>${e.extinguisher_id} — ${esc(locLabel(currentLocation(e.extinguisher_id).loc))}</option>`).join('');
+  openModal('Report an Issue', `
+    <div class="field"><label>Extinguisher</label><select id="rpExt">${opts}</select></div>
+    <div class="field"><label>Issue</label><select id="rpType"><option>Missing</option><option>Discharged / used</option><option>Damaged</option><option>Blocked / obstructed</option><option>Gauge out of range</option><option>Other</option></select></div>
+    <div class="field"><label>Details</label><textarea id="rpNotes" rows="3"></textarea></div>
+    <div style="font-size:13px;color:var(--muted)">Submitting creates an alert (and, in production, emails the responsible team).</div>
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn danger" onclick="submitReport()">Submit report</button></div>`);
+}
+function submitReport(){
+  const ext=$('#rpExt').value, type=$('#rpType').value;
+  DB.alerts.unshift({id:'A-usr-'+Date.now(), level:['Missing','Discharged / used'].includes(type)?'bad':'warn', ext, kind:'User report', title:type, detail:$('#rpNotes').value||'No details', user:CURRENT_USER.full_name, ts:new Date().toISOString()});
+  AUDIT.push({ts:new Date(),who:CURRENT_USER.user_id,action:'REPORT',target:ext,detail:type});
+  closeModal(); toast('Issue reported — alert created'); render();
+}
+
+function openAddExt(){
+  const locs = DB.locations.map(l=>`<option value="${l.location_id}">${l.location_id}</option>`).join('');
+  const f=(id,l,t='text',v='')=>`<div class="field"><label>${l}</label><input id="${id}" type="${t}" value="${v}"></div>`;
+  openModal('Add Extinguisher', `<div class="kv" style="grid-template-columns:1fr 1fr">
+    ${f('nSerial','Serial number')}${f('nMfr','Manufacturer','text','Amerex')}${f('nModel','Model number')}
+    <div class="field"><label>Type</label><select id="nType"><option>ABC Dry Chemical</option><option>CO2</option><option>Class K Wet Chemical</option><option>Water</option><option>Clean Agent</option></select></div>
+    ${f('nRating','Capacity / rating','text','10 lb - 4A:80B:C')}${f('nYear','Manufacture year','number',TODAY.getFullYear())}
+    <div class="field"><label>Location</label><select id="nLoc">${locs}</select></div></div>
+    <div class="actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="submitAddExt()">Add</button></div>`);
+}
+function submitAddExt(){
+  if(!$('#nSerial').value.trim()){ toast('Serial number is required'); return; }
+  const id='EXT-'+String(DB.extinguishers.length+1).padStart(4,'0');
+  DB.extinguishers.push({extinguisher_id:id, serial_number:$('#nSerial').value.trim(), manufacturer:$('#nMfr').value, model_number:$('#nModel').value, extinguisher_type:$('#nType').value,
+    capacity_rating:$('#nRating').value, manufacture_year:+$('#nYear').value, status:'Active', notes:''});
+  DB.deployments.forEach(x=>{ if(x.location_id===$('#nLoc').value && x.is_current){ x.is_current=false; x.removed_date=iso(TODAY);} });
+  DB.deployments.push({deployment_id:'DEP-'+Date.now()%1000, extinguisher_id:id, location_id:$('#nLoc').value, installed_date:iso(TODAY), removed_date:null, is_current:true});
+  AUDIT.push({ts:new Date(),who:CURRENT_USER.user_id,action:'CREATE',target:id,detail:'Extinguisher added at '+$('#nLoc').value});
+  closeModal(); toast(id+' added'); render();
+}
+
+function openQR(id){
+  const opts = DB.extinguishers.map(e=>`<option value="${e.extinguisher_id}" ${e.extinguisher_id===id?'selected':''}>${e.extinguisher_id}</option>`).join('');
+  openModal('QR Code Generator', `<div class="field"><label>Extinguisher</label><select id="qrExt" onchange="drawQR()">${opts}</select></div>
+    <div class="qr-wrap"><canvas id="qrCanvas" width="232" height="232"></canvas><div id="qrInfo" style="font-size:14px;line-height:1.6"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px">Prototype placeholder pattern — swap in a real QR library (e.g. qrcode.js) when wiring up. The encoded payload would be the extinguisher_id URL below.</div>
+    <div class="actions"><button class="btn" onclick="window.print()">Print</button></div>`);
+  drawQR();
+}
+function drawQR(){
+  const id=$('#qrExt').value, c=$('#qrCanvas'), x=c.getContext('2d'), n=29, s=8;
+  x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  let h=0; for(const ch of id) h=(h*31+ch.charCodeAt(0))>>>0;
+  const rnd=()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return (h>>>0)/4294967296;};
+  x.fillStyle='#000';
+  const finder=(fx,fy)=>{x.fillRect(fx*s,fy*s,7*s,7*s);x.fillStyle='#fff';x.fillRect((fx+1)*s,(fy+1)*s,5*s,5*s);x.fillStyle='#000';x.fillRect((fx+2)*s,(fy+2)*s,3*s,3*s);};
+  for(let r=0;r<n;r++)for(let q=0;q<n;q++){ const inF=(r<8&&q<8)||(r<8&&q>=n-8)||(r>=n-8&&q<8); if(!inF&&rnd()<.5) x.fillRect(q*s,r*s,s,s); }
+  finder(0,0);finder(n-7,0);finder(0,n-7);
+  const e=DB.extinguishers.find(z=>z.extinguisher_id===id), {loc}=currentLocation(id);
+  $('#qrInfo').innerHTML=`<b style="font-size:18px">${id}</b><br>${esc(e.extinguisher_type)}<br>${esc(e.capacity_rating)}<br>${esc(locLabel(loc))}<br><code style="font-size:12px">https://fet.mtu.edu/x/${id}</code>`;
+}
+
+function openHelp(){
+  const qa=[
+    ['How often does each extinguisher need a check-in?','Every 31 days at most (NFPA 10 § 7.2.1.2). Units turn amber at 25 days and red after 31.'],
+    ['What do the service statuses mean?','They come from the v_service_status view: “OK”, “<1 week till due”, “<1 week past due”, and “>1 week past due”.'],
+    ['What if a check fails?','Leave the box unchecked and describe the problem. Missing, seal or damage failures are marked Fail; others are Needs Attention. Both raise an alert.'],
+    ['How do I find a unit fast?','Scan its QR tag, or type its ID, building code or serial number in the search box at the top right.'],
+    ['Who can add or remove extinguishers?','Facilities Leads and Safety Admins. See Admin → Role Permissions.'],
+    ['Why can’t I log in?','Access uses Michigan Tech SSO. Ask a Safety Admin to add your account to the authorized users list.'],
+  ];
+  openModal('FAQ / Help', qa.map(([q,a])=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${q}</b><div style="margin-top:4px;font-size:14px">${a}</div></div>`).join(''));
+}
+function openProfile(){
+  const u=CURRENT_USER;
+  openModal('My Profile', `<div class="kv"><div><small>Name</small>${esc(u.full_name)}</div><div><small>Username</small>${u.username}</div><div><small>Email</small>${u.email}</div>
+    <div><small>Role</small>${u.role}</div><div><small>Status</small><span class="pill ok">Active</span></div><div><small>Session</small>Signed in via SSO</div></div>
+    <div class="actions"><button class="btn" onclick="toast('Sign-out would end the SSO session');closeModal()">Sign out</button></div>`);
+}
+
+// WIring
+function setTab(t){ TAB=t; $('#drawer').classList.remove('open'); closeModal(); render(); window.scrollTo(0,0); }
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+$('#search').addEventListener('input',e=>{ QUERY=e.target.value.trim().toLowerCase(); render(); });
+$('#menuBtn').addEventListener('click',e=>{ e.stopPropagation(); $('#drawer').classList.toggle('open'); });
+document.addEventListener('click',e=>{ if(!e.target.closest('#drawer')&&!e.target.closest('#menuBtn')) $('#drawer').classList.remove('open'); });
+$('#avatarBtn').addEventListener('click',openProfile);
+$('#avatarBtn').title = CURRENT_USER.full_name;
+let tt; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2600); }
+render();
+</script>
+</body>
+</html>
