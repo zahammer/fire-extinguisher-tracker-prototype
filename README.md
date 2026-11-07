@@ -1,1 +1,0 @@
-# fire-extinguisher-tracker-prototype
